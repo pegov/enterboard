@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"github.com/pegov/enterboard/backend/internal/api"
+)
 
 func main() {
-	fmt.Printf("Hello\n")
+	api.Run()
 }
