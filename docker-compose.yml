@@ -1,0 +1,6 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    environment:
+        - DEBUG
