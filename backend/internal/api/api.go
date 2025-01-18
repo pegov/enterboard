@@ -11,13 +11,14 @@ import (
 
 	"github.com/pegov/enterboard/backend/internal/http/bind"
 	"github.com/pegov/enterboard/backend/internal/http/render"
+	"github.com/pegov/enterboard/backend/internal/util"
 )
 
 func Run() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	logger := slog.New(util.NewColoredHandler(os.Stdout, &util.ColoredHandlerOptions{
 		Level: slog.LevelDebug,
 	}))
 
