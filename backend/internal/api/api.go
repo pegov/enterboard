@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/pegov/enterboard/backend/internal/http/bind"
 	"github.com/pegov/enterboard/backend/internal/http/render"
+	"github.com/pegov/enterboard/backend/internal/service"
 	"github.com/pegov/enterboard/backend/internal/util"
 )
 
@@ -22,7 +25,8 @@ func Run() {
 		Level: slog.LevelDebug,
 	}))
 
-	handler := NewHandler(logger)
+	s := service.New(logger)
+	handler := NewHandler(logger, s)
 	makeHandler := func(fn HandlerFuncWithError) http.HandlerFunc {
 		return makeHandlerFull(fn, logger)
 	}
@@ -31,17 +35,20 @@ func Run() {
 	apiV1.Post("/posts", makeHandler(handler.CreatePost))
 
 	r.Mount("/api/v1", apiV1)
+	logger = logger.With(slog.String("component", "[API]"))
+	logger = logger.With(slog.String("another", "[another]"))
 
-	logger.Debug("Listen")
+	logger.Debug("Listen", slog.Any("addr", "ADDR"))
 	http.ListenAndServe(":3000", r)
 }
 
 type Handler struct {
 	logger *slog.Logger
+	s      *service.Service
 }
 
-func NewHandler(logger *slog.Logger) *Handler {
-	return &Handler{logger: logger}
+func NewHandler(logger *slog.Logger, s *service.Service) *Handler {
+	return &Handler{logger: logger, s: s}
 }
 
 type HandlerFuncWithError = func(w http.ResponseWriter, r *http.Request) error
@@ -86,10 +93,25 @@ type CreatePost struct {
 }
 
 func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) error {
-	var req CreatePost
+	return GenericReqAndRes(w, r, h.s.CreatePost, "CreatePost")
+}
+
+func GenericReqAndRes[REQ, RES any](
+	w http.ResponseWriter,
+	r *http.Request,
+	action func(context.Context, REQ) (*RES, error),
+	actionName string,
+) error {
+	var req REQ
 	if err := bind.JSON(r, &req); err != nil {
 		return err
 	}
 
+	v, err := action(r.Context(), req)
+	if err != nil {
+		return fmt.Errorf("service.%s: %w", actionName, err)
+	}
+
+	render.JSON(w, http.StatusOK, v)
 	return nil
 }
