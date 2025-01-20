@@ -11,13 +11,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
+	"github.com/pegov/enterboard/backend/internal/config"
 	"github.com/pegov/enterboard/backend/internal/http/bind"
 	"github.com/pegov/enterboard/backend/internal/http/render"
 	"github.com/pegov/enterboard/backend/internal/service"
 	"github.com/pegov/enterboard/backend/internal/util"
 )
 
-func Run() {
+func Run(cfg *config.Config) {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
@@ -38,8 +39,9 @@ func Run() {
 	logger = logger.With(slog.String("component", "[API]"))
 	logger = logger.With(slog.String("another", "[another]"))
 
-	logger.Debug("Listen", slog.Any("addr", "ADDR"))
-	http.ListenAndServe(":3000", r)
+	addr := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
+	logger.Debug("Listen", slog.Any("addr", addr))
+	http.ListenAndServe(addr, r)
 }
 
 type Handler struct {
