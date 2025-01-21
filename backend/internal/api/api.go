@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -15,16 +14,17 @@ import (
 	"github.com/pegov/enterboard/backend/internal/http/bind"
 	"github.com/pegov/enterboard/backend/internal/http/render"
 	"github.com/pegov/enterboard/backend/internal/service"
-	"github.com/pegov/enterboard/backend/internal/util"
+	"github.com/pegov/enterboard/backend/internal/storage"
 )
 
-func Run(cfg *config.Config) {
+func Run(
+	ctx context.Context,
+	logger *slog.Logger,
+	cfg *config.Config,
+	st *storage.Storage,
+) {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-
-	logger := slog.New(util.NewColoredHandler(os.Stdout, &util.ColoredHandlerOptions{
-		Level: slog.LevelDebug,
-	}))
 
 	s := service.New(logger)
 	handler := NewHandler(logger, s)
