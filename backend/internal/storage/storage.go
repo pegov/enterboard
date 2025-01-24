@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
@@ -16,7 +15,7 @@ type Storage struct {
 	Cache *redis.Client
 }
 
-func New(ctx context.Context, logger *slog.Logger, cfg *config.Config) (*Storage, error) {
+func New(ctx context.Context, cfg *config.Config) (*Storage, error) {
 	pgURL := fmt.Sprintf(
 		"postgres://%s:%s@%s:%d/%s",
 		cfg.DB.Username,
@@ -27,7 +26,6 @@ func New(ctx context.Context, logger *slog.Logger, cfg *config.Config) (*Storage
 	)
 	db, err := NewPG(
 		ctx,
-		logger,
 		pgURL,
 		cfg.DB.MaxIdleConns,
 		cfg.DB.MaxOpenConns,
@@ -43,7 +41,7 @@ func New(ctx context.Context, logger *slog.Logger, cfg *config.Config) (*Storage
 		cfg.Cache.Port,
 		cfg.Cache.Database,
 	)
-	cache, err := NewRedis(ctx, logger, redisURL)
+	cache, err := NewRedis(ctx, redisURL)
 	if err != nil {
 		return nil, fmt.Errorf("redis: %w", err)
 	}

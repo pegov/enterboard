@@ -22,7 +22,7 @@ func main() {
 	}))
 
 	ctx := context.TODO()
-	st, err := storage.New(ctx, logger, cfg)
+	st, err := storage.New(ctx, cfg)
 	if err != nil {
 		logger.Error("failed to connect to storages", slog.Any("err", err))
 		os.Exit(1)

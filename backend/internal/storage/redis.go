@@ -3,16 +3,11 @@ package storage
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/redis/go-redis/v9"
 )
 
-func NewRedis(
-	ctx context.Context,
-	logger *slog.Logger,
-	url string,
-) (*redis.Client, error) {
+func NewRedis(ctx context.Context, url string) (*redis.Client, error) {
 	opt, err := redis.ParseURL(url)
 	if err != nil {
 		return nil, fmt.Errorf("redis.ParseURL: %w", err)
