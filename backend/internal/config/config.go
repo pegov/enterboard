@@ -7,8 +7,9 @@ import (
 )
 
 type Config struct {
-	App App
-	DB  DB
+	App   App
+	DB    DB
+	Cache Cache
 }
 
 type App struct {
@@ -25,6 +26,12 @@ type DB struct {
 	MaxIdleConns    int           `envconfig:"DB_MAX_IDLE_CONNS" default:"20"`
 	MaxOpenConns    int           `envconfig:"DB_MAX_OPEN_CONNS" default:"20"`
 	ConnMaxLifetime time.Duration `envconfig:"DB_CONN_MAX_LIFETIME" default:"1h"`
+}
+
+type Cache struct {
+	Host     string `envconfig:"CACHE_HOST"`
+	Port     uint16 `envconfig:"CACHE_PORT"`
+	Database string `envconfig:"CACHE_DATABASE"`
 }
 
 func New() *Config {
