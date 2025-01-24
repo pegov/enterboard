@@ -48,3 +48,23 @@ func New(ctx context.Context, cfg *config.Config) (*Storage, error) {
 
 	return &Storage{DB: db, Cache: cache}, nil
 }
+
+func NewTest(ctx context.Context, cfg *config.Config, dbURL string) (*Storage, error) {
+	db, err := NewSQLite(ctx, dbURL)
+	if err != nil {
+		return nil, fmt.Errorf("sqlite: %w", err)
+	}
+
+	redisURL := fmt.Sprintf(
+		"redis://%s:%d/%s",
+		cfg.Cache.Host,
+		cfg.Cache.Port,
+		cfg.Cache.Database,
+	)
+	cache, err := NewRedis(ctx, redisURL)
+	if err != nil {
+		return nil, fmt.Errorf("redis: %w", err)
+	}
+
+	return &Storage{DB: db, Cache: cache}, nil
+}
