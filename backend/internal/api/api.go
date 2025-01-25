@@ -13,20 +13,20 @@ import (
 	"github.com/pegov/enterboard/backend/internal/config"
 	"github.com/pegov/enterboard/backend/internal/http/bind"
 	"github.com/pegov/enterboard/backend/internal/http/render"
+	"github.com/pegov/enterboard/backend/internal/repo"
 	"github.com/pegov/enterboard/backend/internal/service"
-	"github.com/pegov/enterboard/backend/internal/storage"
 )
 
 func Run(
 	ctx context.Context,
 	logger *slog.Logger,
 	cfg *config.Config,
-	st *storage.Storage,
+	re *repo.Repo,
 ) {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	s := service.New(logger)
+	s := service.New(logger, re)
 	handler := NewHandler(logger, s)
 	makeHandler := func(fn HandlerFuncWithError) http.HandlerFunc {
 		return makeHandlerFull(fn, logger)

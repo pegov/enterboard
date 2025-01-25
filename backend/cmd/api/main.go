@@ -9,6 +9,7 @@ import (
 
 	"github.com/pegov/enterboard/backend/internal/api"
 	"github.com/pegov/enterboard/backend/internal/config"
+	"github.com/pegov/enterboard/backend/internal/repo"
 	"github.com/pegov/enterboard/backend/internal/storage"
 	"github.com/pegov/enterboard/backend/internal/util"
 )
@@ -27,6 +28,7 @@ func main() {
 		logger.Error("failed to connect to storages", slog.Any("err", err))
 		os.Exit(1)
 	}
+	r := repo.New(st)
 
-	api.Run(ctx, logger, cfg, st)
+	api.Run(ctx, logger, cfg, r)
 }

@@ -5,19 +5,21 @@ import (
 	"log/slog"
 
 	"github.com/pegov/enterboard/backend/internal/model"
+	"github.com/pegov/enterboard/backend/internal/repo"
 )
 
 type Service struct {
 	logger *slog.Logger
+	r      *repo.Repo
 }
 
-func New(logger *slog.Logger) *Service {
-	return &Service{logger: logger}
+func New(logger *slog.Logger, r *repo.Repo) *Service {
+	return &Service{logger: logger, r: r}
 }
 
 func (s *Service) CreatePost(
 	ctx context.Context,
 	data model.CreatePost,
 ) (*model.Post, error) {
-	return nil, nil
+	return s.r.CreatePost(ctx, data)
 }
