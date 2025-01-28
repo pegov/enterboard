@@ -10,6 +10,7 @@ import (
 	"github.com/pegov/enterboard/backend/internal/api"
 	"github.com/pegov/enterboard/backend/internal/config"
 	"github.com/pegov/enterboard/backend/internal/repo"
+	"github.com/pegov/enterboard/backend/internal/service"
 	"github.com/pegov/enterboard/backend/internal/storage"
 	"github.com/pegov/enterboard/backend/internal/util"
 )
@@ -30,5 +31,7 @@ func main() {
 	}
 	r := repo.New(st)
 
-	api.Run(ctx, logger, cfg, r)
+	srv := service.New(logger, r)
+
+	api.Run(ctx, logger, cfg, srv)
 }
