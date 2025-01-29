@@ -3,8 +3,10 @@ package storage
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -12,6 +14,7 @@ import (
 
 func NewPG(
 	ctx context.Context,
+	logger *slog.Logger,
 	url string,
 	maxIdleConns int,
 	maxOpenConns int,
@@ -20,6 +23,9 @@ func NewPG(
 	poolCfg, err := pgxpool.ParseConfig(url)
 	if err != nil {
 		return nil, fmt.Errorf("pgxpool.ParseConfig: %w", err)
+	}
+	poolCfg.ConnConfig.Tracer = &customQueryTracer{
+		log: logger,
 	}
 
 	pool, err := pgxpool.NewWithConfig(ctx, poolCfg)
@@ -43,4 +49,31 @@ func NewPG(
 	// TODO: migrations
 
 	return db, nil
+}
+
+type customQueryTracer struct {
+	log *slog.Logger
+}
+
+func (tracer *customQueryTracer) TraceQueryStart(
+	ctx context.Context,
+	_ *pgx.Conn,
+	data pgx.TraceQueryStartData,
+) context.Context {
+	ctx = context.WithValue(ctx, "query", data.SQL)
+	ctx = context.WithValue(ctx, "args", data.Args)
+	ctx = context.WithValue(ctx, "start", time.Now())
+	return ctx
+}
+
+func (tracer *customQueryTracer) TraceQueryEnd(ctx context.Context, conn *pgx.Conn, data pgx.TraceQueryEndData) {
+	if data.Err != nil {
+		tracer.log.Error(
+			"pgx",
+			slog.Any("query", ctx.Value("query")),
+			slog.Any("args", ctx.Value("args")),
+			slog.Any("duration", time.Since(ctx.Value("start").(time.Time))),
+			slog.Any("err", data.Err),
+		)
+	}
 }
