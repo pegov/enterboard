@@ -78,6 +78,6 @@ func TestWithPostgres(t *testing.T) {
 	}
 
 	if got, want := four, 4; got != want {
-		t.Fatalf("not 4")
+		t.Fatalf("got=%v, want=%v", got, want)
 	}
 }
