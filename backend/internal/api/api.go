@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/pegov/enterboard/backend/internal/config"
 	"github.com/pegov/enterboard/backend/internal/http/bind"
@@ -22,6 +25,11 @@ func Run(
 	cfg *config.Config,
 	srv *service.Service,
 ) {
+	reg := prometheus.NewRegistry()
+	m := NewMetrics(reg)
+
+	promHandler := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
+
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
@@ -30,8 +38,17 @@ func Run(
 		return makeHandlerFull(fn, logger)
 	}
 
+	mMux := http.NewServeMux()
+	mMux.Handle("/metrics", promHandler)
+
 	apiV1 := chi.NewRouter()
 	apiV1.Post("/posts", makeHandler(handler.CreatePost))
+	apiV1.Get("/test", func(w http.ResponseWriter, r *http.Request) {
+		m.tests.Inc()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		json.NewEncoder(w).Encode(map[string]string{"test": "test"})
+	})
 
 	r.Mount("/api/v1", apiV1)
 	logger = logger.With(slog.String("component", "[API]"))
@@ -39,7 +56,27 @@ func Run(
 
 	addr := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
 	logger.Debug("Listen", slog.Any("addr", addr))
+	go func() {
+		http.ListenAndServe(":3030", mMux)
+	}()
+
 	http.ListenAndServe(addr, r)
+}
+
+type metrics struct {
+	tests prometheus.Gauge
+}
+
+func NewMetrics(reg prometheus.Registerer) *metrics {
+	m := &metrics{
+		tests: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: "enterboard",
+			Name:      "tests",
+			Help:      "number of tests",
+		}),
+	}
+	reg.MustRegister(m.tests)
+	return m
 }
 
 type Handler struct {
