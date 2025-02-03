@@ -54,12 +54,14 @@ func Run(
 	logger = logger.With(slog.String("component", "[API]"))
 	logger = logger.With(slog.String("another", "[another]"))
 
-	addr := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
-	logger.Debug("Listen", slog.Any("addr", addr))
 	go func() {
-		http.ListenAndServe(":3030", mMux)
+		addr := fmt.Sprintf("%s:%d", cfg.App.MetricsHost, cfg.App.MetricsPort)
+		logger.Debug("Metrics", slog.Any("addr", addr))
+		http.ListenAndServe(addr, mMux)
 	}()
 
+	addr := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
+	logger.Debug("API", slog.Any("addr", addr))
 	http.ListenAndServe(addr, r)
 }
 

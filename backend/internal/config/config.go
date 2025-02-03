@@ -13,8 +13,10 @@ type Config struct {
 }
 
 type App struct {
-	Host string `envconfig:"APP_HOST"`
-	Port uint16 `envconfig:"APP_PORT"`
+	Host        string `envconfig:"APP_HOST"`
+	Port        uint16 `envconfig:"APP_PORT"`
+	MetricsHost string `envconfig:"APP_METRICS_HOST"`
+	MetricsPort uint16 `envconfig:"APP_METRICS_PORT"`
 }
 
 type DB struct {
