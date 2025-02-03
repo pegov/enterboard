@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
 	"os"
 
@@ -15,12 +16,24 @@ import (
 	"github.com/pegov/enterboard/backend/internal/util"
 )
 
+var (
+	verbose = flag.Bool("verbose", false, "log level = debug")
+)
+
 func main() {
+	flag.Parse()
 	godotenv.Load()
 
 	cfg := config.New()
+
+	var level slog.Level
+	if *verbose {
+		level = slog.LevelDebug
+	} else {
+		level = slog.LevelInfo
+	}
 	logger := slog.New(util.NewColoredHandler(os.Stdout, &util.ColoredHandlerOptions{
-		Level: slog.LevelDebug,
+		Level: level,
 	}))
 
 	ctx := context.TODO()
