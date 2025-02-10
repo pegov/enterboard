@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/pegov/enterboard/backend/internal/config"
+	"github.com/pegov/enterboard/backend/internal/dto"
 	"github.com/pegov/enterboard/backend/internal/http/bind"
 	"github.com/pegov/enterboard/backend/internal/http/render"
 	"github.com/pegov/enterboard/backend/internal/service"
@@ -105,6 +106,7 @@ func NewDetail(detail string) Detail {
 func makeHandlerFull(fn HandlerFuncWithError, logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var bindJSONError *bind.BindJSONError
+		var validationError *dto.ValidationError
 		if err := fn(w, r); err != nil {
 			switch {
 			case errors.As(err, &bindJSONError):
@@ -112,6 +114,13 @@ func makeHandlerFull(fn HandlerFuncWithError, logger *slog.Logger) http.HandlerF
 					w,
 					bindJSONError.Status,
 					NewDetail(bindJSONError.Message),
+				)
+
+			case errors.As(err, &validationError):
+				render.JSON(
+					w,
+					http.StatusBadRequest,
+					NewDetail(validationError.Error()),
 				)
 
 			default:
@@ -124,11 +133,6 @@ func makeHandlerFull(fn HandlerFuncWithError, logger *slog.Logger) http.HandlerF
 			}
 		}
 	}
-}
-
-type CreatePost struct {
-	Title   string `json:"title"`
-	Message string `json:"message"`
 }
 
 func (h *Handler) CreatePost(w http.ResponseWriter, r *http.Request) error {

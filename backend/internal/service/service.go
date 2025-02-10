@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/pegov/enterboard/backend/internal/dto"
 	"github.com/pegov/enterboard/backend/internal/model"
 	"github.com/pegov/enterboard/backend/internal/repo"
 )
@@ -19,7 +20,11 @@ func New(logger *slog.Logger, r *repo.Repo) *Service {
 
 func (s *Service) CreatePost(
 	ctx context.Context,
-	data model.CreatePost,
+	data dto.CreatePost,
 ) (*model.Post, error) {
+	if err := data.Validate(); err != nil {
+		return nil, dto.NewValidationError(err)
+	}
+
 	return s.r.CreatePost(ctx, data)
 }
