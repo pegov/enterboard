@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -46,7 +47,13 @@ func NewPG(
 
 	db := sqlx.NewDb(sqldb, "pgx")
 
-	// TODO: migrations
+	initScript, err := os.ReadFile("resources/sql/init.sql")
+	if err != nil {
+		return nil, fmt.Errorf("os.ReadFile: %w", err)
+	}
+	if _, err := sqldb.ExecContext(ctx, string(initScript)); err != nil {
+		return nil, fmt.Errorf("sql.Exec initScript: %w", err)
+	}
 
 	return db, nil
 }
