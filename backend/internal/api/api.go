@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -27,7 +26,6 @@ func Run(
 	srv *service.Service,
 ) {
 	reg := prometheus.NewRegistry()
-	m := NewMetrics(reg)
 
 	promHandler := promhttp.HandlerFor(reg, promhttp.HandlerOpts{})
 
@@ -44,16 +42,9 @@ func Run(
 
 	apiV1 := chi.NewRouter()
 	apiV1.Post("/posts", makeHandler(handler.CreatePost))
-	apiV1.Get("/test", func(w http.ResponseWriter, r *http.Request) {
-		m.tests.Inc()
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		json.NewEncoder(w).Encode(map[string]string{"test": "test"})
-	})
 
 	r.Mount("/api/v1", apiV1)
-	logger = logger.With(slog.String("component", "[API]"))
-	logger = logger.With(slog.String("another", "[another]"))
+	logger = logger.With(slog.String("unit", "[API]"))
 
 	go func() {
 		addr := fmt.Sprintf("%s:%d", cfg.App.MetricsHost, cfg.App.MetricsPort)
@@ -64,22 +55,6 @@ func Run(
 	addr := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
 	logger.Debug("API", slog.Any("addr", addr))
 	http.ListenAndServe(addr, r)
-}
-
-type metrics struct {
-	tests prometheus.Gauge
-}
-
-func NewMetrics(reg prometheus.Registerer) *metrics {
-	m := &metrics{
-		tests: prometheus.NewGauge(prometheus.GaugeOpts{
-			Namespace: "enterboard",
-			Name:      "tests",
-			Help:      "number of tests",
-		}),
-	}
-	reg.MustRegister(m.tests)
-	return m
 }
 
 type Handler struct {
